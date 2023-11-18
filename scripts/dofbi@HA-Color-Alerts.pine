@@ -1,0 +1,31 @@
+// This source code is subject to the terms of the Mozilla Public License 2.0 at https://mozilla.org/MPL/2.0/
+// © dofbi
+
+//@version=5
+indicator("Heikin Ashi Color Change Alerts", overlay=true, shorttitle = "HA Color Alerts")
+
+var float haOpen = na
+var string percentChange = ""
+
+haClose = (open + high + low + close) / 4
+haOpen := na(haOpen[1]) ? (open + close) / 2 : (haOpen[1] + haClose[1]) / 2
+haHigh = high >= haOpen and high >= haClose ? high : haOpen >= haClose ? haOpen : haClose
+haLow = low <= haOpen and low <= haClose ? low : haOpen <= haClose ? haOpen : haClose
+
+isBullish = haClose > haOpen
+isBearish = haClose < haOpen
+
+changeColor = isBullish != isBullish[1] or isBearish != isBearish[1]
+
+percentChange := str.tostring(changeColor ? math.round(math.abs((haClose - haClose[1]) / haClose[1]) * 100,2) : na)+'%'
+
+/// Utilisation de symboles ↑ et ↓ pour marquer le changement de couleur
+plotchar(changeColor and isBullish, char='↑', location=location.belowbar, color=color.green, size=size.small)
+plotchar(changeColor and isBearish, char='↓', location=location.belowbar, color=color.red, size=size.small)
+
+if changeColor
+    myLabel = label.new(bar_index, high, text=percentChange, style=label.style_none, size=size.large)
+    label.set_textcolor(id=myLabel, textcolor=color.rgb(126, 126, 126))
+
+alertcondition(changeColor and isBullish, title="Changement de couleur", message="La bougie est passée en mode ↑ haussier !")
+alertcondition(changeColor and isBearish, title="Changement de couleur", message="La bougie est passée en mode ↓ baissier !")
